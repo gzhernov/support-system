@@ -1,0 +1,430 @@
+/* ======== СПЕЦИФИЧНЫЕ СТИЛИ ОПЕРАТОРА ======== */
+
+/* Шапка оператора */
+.operator-info {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.operator-badge {
+    background: rgba(255,255,255,0.15);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(5px);
+}
+
+.btn-toggle-status {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-toggle-status:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+
+.btn-toggle-status.busy {
+    background: #e74c3c;
+}
+
+.btn-logout {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-left: 5px;
+}
+
+.btn-logout:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+
+/* Панель статистики */
+.stats-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 15px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.stat-item {
+    background: #ebf8ff;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #64748b;
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Кнопка "Взять следующий" */
+.queue-actions {
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.take-next-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.take-next-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+}
+
+.take-next-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.next-badge {
+    background: white;
+    color: #27ae60;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 1s infinite;
+}
+
+/* Табы */
+.tabs-header {
+    display: flex;
+    padding: 0 15px;
+    gap: 5px;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 5px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.tab-btn i {
+    font-size: 14px;
+}
+
+.tab-btn.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    font-weight: 600;
+}
+
+.tab-badge {
+    background: #e2e8f0;
+    color: #475569;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+}
+
+.tab-btn.active .tab-badge {
+    background: #3498db;
+    color: white;
+}
+
+/* Специфичные статусы для оператора */
+.status-OPEN { background: #fef3c7; color: #92400e; }
+.status-IN_PROGRESS { background: #dbeafe; color: #1e40af; }
+.status-CLOSED { background: #e5e7eb; color: #4b5563; }
+
+/* Информация о клиенте в тикете */
+.client-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 8px;
+    background: #f1f5f9;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.client-avatar-small {
+    width: 24px;
+    height: 24px;
+    background: #3498db;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.client-name {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.client-sessions-badge {
+    margin-left: auto;
+    background: #cbd5e1;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Шапка чата оператора */
+.chat-header {
+    background: white;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.client-badge {
+    background: #f0f4ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+}
+
+.client-avatar {
+    width: 24px;
+    height: 24px;
+    background: #3498db;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.ticket-meta-info {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+    color: #64748b;
+    flex-wrap: wrap;
+}
+
+.ticket-id {
+    font-family: monospace;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.client-sessions {
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-close-ticket {
+    padding: 8px 15px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.btn-close-ticket:hover:not(:disabled) {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-close-ticket:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Индикатор печатания для оператора */
+.typing-client {
+    background: #3498db;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* Детали тикета */
+.ticket-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.detail-label {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    word-break: break-word;
+}
+
+/* Элементы тикета для оператора */
+.ticket-item.queue-item {
+    border-left: 4px solid #f39c12;
+}
+
+.ticket-item.closed-item {
+    opacity: 0.7;
+    background: #f8fafc;
+}
+
+.ticket-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.unread-badge {
+    background: #e74c3c;
+    color: white;
+    border-radius: 16px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.ticket-details-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.ticket-details-btn:hover {
+    color: #3498db;
+}
+
+/* Пустые состояния */
+.empty-list,
+.no-messages {
+    text-align: center;
+    color: #94a3b8;
+    padding: 30px;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Сессия в сообщении */
+.message-session {
+    background: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: #4b5563;
+}
+
+.message-client .message-session {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}

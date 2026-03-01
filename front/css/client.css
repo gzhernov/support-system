@@ -1,0 +1,252 @@
+/* ======== СПЕЦИФИЧНЫЕ СТИЛИ КЛИЕНТА ======== */
+
+/* Информация о клиенте в шапке */
+.client-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.client-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Статус подключения */
+.status-dot {
+    font-size: 12px;
+}
+
+/* Кнопка нового обращения */
+.new-ticket-btn {
+    width: 100%;
+    padding: 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.new-ticket-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+.empty-state-btn {
+    width: auto;
+    margin-top: 20px;
+}
+
+/* Счетчик тикетов */
+.ticket-count {
+    background: #3498db;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* Информация об операторе */
+.ticket-operator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #3498db;
+    background: #f0f4ff;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.ticket-right-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.operator-avatar {
+    width: 20px;
+    height: 20px;
+    background: #ffd700;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #4a5568;
+    font-weight: bold;
+}
+
+.no-operator-badge {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px dashed #f59e0b;
+}
+
+/* Индикатор новых сообщений */
+.unread-indicator {
+    display: inline-flex;
+    align-items: center;
+    background: #e74c3c;
+    color: white;
+    border-radius: 16px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    gap: 4px;
+    margin-left: 4px;
+}
+
+.unread-indicator::before {
+    content: "💬";
+    font-size: 10px;
+    opacity: 0.9;
+}
+
+.ticket-preview {
+    font-size: 12px;
+    color: #718096;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Шапка чата клиента */
+.chat-header {
+    background: #2c3e50;
+    color: white;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.operator-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.waiting-operator {
+    color: #f59e0b;
+    font-style: italic;
+}
+
+/* Анимация ожидания */
+.assigning-dots {
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 5px;
+}
+
+.assigning-dots span {
+    width: 4px;
+    height: 4px;
+    background: #92400e;
+    border-radius: 50%;
+    animation: dotPulse 1.5s infinite;
+}
+
+.assigning-dots span:nth-child(2) { animation-delay: 0.2s; }
+.assigning-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 1; }
+}
+
+/* Статусы чата клиента */
+/*.chat-status {*/
+/*    padding: 5px 12px;*/
+/*    border-radius: 15px;*/
+/*    font-size: 12px;*/
+/*    font-weight: bold;*/
+/*}*/
+
+/*.status-waiting { background: #f59e0b; color: white; }*/
+/*.status-active { background: #27ae60; color: white; }*/
+/*.status-closed { background: #7f8c8d; color: white; }*/
+
+/* Имя оператора в сообщении */
+.message-operator-name {
+    font-size: 11px;
+    color: #718096;
+    background: #f0f4ff;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* Индикатор печатания для клиента */
+.typing-operator {
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #4a5568;
+}
+
+/* ======== МОДАЛЬНОЕ ОКНО КЛИЕНТА ======== */
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.modal-content textarea {
+    height: 120px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Специфичные стили для полей ввода */
+#ticketTitle,
+#ticketDescription {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#ticketDescription {
+    height: 120px;
+    resize: vertical;
+}
