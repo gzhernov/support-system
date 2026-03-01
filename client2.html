@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+    <h2>💬 Тест WebSocket чата</h2>
+    
+    <div>
+        <input type="text" id="name" value="User" />
+        <button onclick="connect()">Подключиться</button>
+        <button onclick="disconnect()">Отключиться</button>
+    </div>
+    
+    <div id="messages" style="height:200px; overflow:auto; border:1px solid #ccc; margin:10px 0; padding:5px;"></div>
+    
+    <div>
+        <input type="text" id="message" style="width:300px;" />
+        <button onclick="send()">Отправить</button>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let name = document.getElementById('name');
+        
+        function connect() {
+            const socket = new SockJS('http://localhost:8080/chat');  // ← тот же URL, что в конфиге
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function() {
+                // Подписываемся на получение сообщений
+                stompClient.subscribe('/topic/messages/1', function(msg) {
+                    const data = JSON.parse(msg.body);
+                    showMessage(data);
+                });
+
+                // Отправляем уведомление о подключении
+                stompClient.send("/app/join", {}, JSON.stringify({
+                    room:1,
+                    from: name.value
+                }));
+
+                document.getElementById('messages').innerHTML += '<div style="color:green">✅ Подключено!</div>';
+            });
+        }
+        
+        function disconnect() {
+            if (stompClient) {
+                stompClient.disconnect();
+                document.getElementById('messages').innerHTML += '<div style="color:red">❌ Отключено</div>';
+            }
+        }
+        
+        function send() {
+            const msg = document.getElementById('message').value;
+            if (msg && stompClient) {
+                stompClient.send("/app/send", {}, JSON.stringify({
+                    room:1,
+                    from: name.value,
+                    text: msg
+                }));
+                document.getElementById('message').value = '';
+            }
+        }
+        
+        function showMessage(msg) {
+            const time = msg.time || new Date().toLocaleTimeString();
+            document.getElementById('messages').innerHTML += 
+                `<div><b>[${time}] ${msg.from}:</b> ${msg.text}</div>`;
+        }
+    </script>
+</body>
+</html>

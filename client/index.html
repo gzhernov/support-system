@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Чат поддержки</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- WebSocket библиотеки -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <!-- Шапка -->
+    <header class="app-header">
+        <h1>
+            <span>📞 Поддержка</span>
+            <span class="header-badge">(реальное время)</span>
+        </h1>
+        <div class="client-info">
+            <div class="client-badge">
+                <span>👤 Клиент: <strong id="clientName">Загрузка...</strong></span>
+            </div>
+            <div class="client-badge">
+                <span>🆔 ID: <strong id="clientId">Загрузка...</strong></span>
+            </div>
+            <!-- Добавляем недостающий элемент для статуса -->
+            <div class="client-badge" id="connectionStatus">
+                <span class="status-dot">🔴</span>
+                <span class="status-text">Отключен</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контент -->
+    <div class="main-content">
+        <!-- Левая колонка - обращения -->
+        <aside class="tickets-sidebar">
+            <div class="sidebar-header">
+                <h2>
+                    <span>📋 Мои обращения</span>
+                    <span class="ticket-count" id="ticketCount">0</span>
+                </h2>
+                <button class="new-ticket-btn" onclick="openNewTicketModal()">
+                    <span>➕</span> Новое обращение
+                </button>
+            </div>
+
+            <div class="tickets-list" id="ticketsList">
+                <!-- Динамически заполняется JS -->
+            </div>
+        </aside>
+
+        <!-- Правая колонка - чат -->
+        <main class="chat-area" id="chatArea">
+            <!-- Пустое состояние -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-state-icon">💬</div>
+                <h3>Выберите обращение</h3>
+                <p>Кликните на обращение в списке слева,<br>чтобы открыть чат</p>
+                <button class="new-ticket-btn empty-state-btn" onclick="openNewTicketModal()">
+                    ➕ Создать новое обращение
+                </button>
+            </div>
+
+            <!-- Активный чат (скрыт по умолчанию) -->
+            <div class="chat-container hidden" id="activeChat">
+                <!-- Шапка чата -->
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <h3>
+                            <span id="activeTicketTitle">Загрузка...</span>
+                            <span class="operator-badge" id="operatorBadge">
+                                    <span class="operator-avatar" id="operatorAvatar">⏳</span>
+                                    <span id="operatorName">Ожидание...</span>
+                                </span>
+                        </h3>
+                        <p id="activeTicketId">#загрузка</p>
+                    </div>
+                    <div>
+                        <span class="chat-status" id="activeTicketStatus">Ожидание</span>
+                    </div>
+                </div>
+
+                <!-- Сообщения -->
+                <div class="chat-messages" id="chatMessages"></div>
+
+                <!-- Индикатор печатания -->
+                <div class="typing-indicator hidden" id="typingIndicator">
+                    <span class="typing-operator" id="typingOperator"></span>
+                    <span id="typingText"></span>
+                </div>
+
+                <!-- Поле ввода -->
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
+                    <button id="sendButton" disabled>Отправить</button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Модальное окно нового обращения -->
+<div class="modal" id="newTicketModal">
+    <div class="modal-content">
+        <h2>📝 Новое обращение</h2>
+
+        <input type="text" id="ticketTitle" placeholder="Краткое описание (заголовок)" maxlength="200">
+        <textarea id="ticketDescription" placeholder="Подробное описание проблемы..." maxlength="1000"></textarea>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeNewTicketModal()">Отмена</button>
+            <button class="btn-submit" onclick="createNewTicket()">Создать</button>
+        </div>
+    </div>
+</div>
+
+<!-- Уведомления -->
+<div class="toast" id="toast">
+    <span id="toastMessage">Уведомление</span>
+</div>
+
+<!-- Скрипты -->
+<script src="js/app.js"></script>
+</body>
+</html>

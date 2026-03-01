@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Клиент - Чат поддержки</title>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 800px;
+            max-width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .client-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .client-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .session-id {
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .create-ticket {
+            padding: 30px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .create-ticket h3 {
+            margin-bottom: 20px;
+            color: #2d3748;
+            font-size: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        .chat-container {
+            display: none;
+        }
+        .chat-header {
+            background: #4a5568;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header-info h3 {
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        .chat-header-info p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-online {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-offline {
+            background: #f44336;
+            color: white;
+        }
+        .status-waiting {
+            background: #ff9800;
+            color: white;
+        }
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f7f7f7;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+            position: relative;
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .my-message {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .support-message {
+            background: white;
+            border: 1px solid #e2e8f0;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        .system-message {
+            background: #ffd700;
+            color: #333;
+            text-align: center;
+            font-size: 12px;
+            max-width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 20px;
+        }
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .typing-indicator {
+            color: #718096;
+            font-style: italic;
+            padding: 10px 20px;
+            min-height: 30px;
+            font-size: 14px;
+        }
+        .chat-input {
+            display: flex;
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e2e8f0;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-right: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .chat-input input:disabled {
+            background: #f7f7f7;
+            cursor: not-allowed;
+        }
+        .chat-input button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .chat-input button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .chat-input button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        .ticket-info {
+            background: #ebf4ff;
+            padding: 15px;
+            margin: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .ticket-info p {
+            margin: 5px 0;
+            color: #2d3748;
+        }
+        .ticket-id {
+            font-family: monospace;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .waiting-animation {
+            display: inline-block;
+            width: 20px;
+            text-align: left;
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        .footer {
+            padding: 15px;
+            text-align: center;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 12px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <!-- Шапка с информацией о клиенте -->
+    <div class="header">
+        <h1>💬 Чат поддержки</h1>
+        <div class="client-info">
+            <p><strong>Ваше имя:</strong> <span id="clientNameDisplay">Загрузка...</span></p>
+            <p><strong>Ваш ID:</strong> <span id="clientIdDisplay" class="session-id">...</span></p>
+            <p><strong>Session ID:</strong> <span id="sessionIdDisplay" class="session-id">не подключен</span></p>
+            <p>
+                <strong>Статус:</strong>
+                <span id="connectionStatus" class="status-badge status-offline">Отключен</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Форма создания обращения -->
+    <div class="create-ticket" id="ticketForm">
+        <h3>📝 Создать новое обращение</h3>
+        <div class="input-group">
+            <input type="text" id="subjectInput"
+                   placeholder="Опишите вашу проблему..."
+                   maxlength="500">
+            <button class="btn btn-primary" onclick="createTicket()" id="createBtn">
+                Отправить
+            </button>
+        </div>
+        <p style="color: #718096; font-size: 12px; margin-top: 10px;">
+            * Опишите проблему подробно, это поможет быстрее её решить
+        </p>
+    </div>
+
+    <!-- Чат (скрыт до создания обращения) -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <h3 id="supportInfo">⏳ Ожидание оператора...</h3>
+                <p id="ticketIdDisplay"></p>
+            </div>
+            <div>
+                <span id="supportStatus" class="status-badge status-waiting">Ожидание</span>
+            </div>
+        </div>
+
+        <!-- Информация о тикете -->
+        <div class="ticket-info" id="ticketInfo">
+            <p><strong>📋 Тикет:</strong> <span id="ticketNumber" class="ticket-id">...</span></p>
+            <p><strong>Тема:</strong> <span id="ticketSubject"></span></p>
+            <p><strong>Создан:</strong> <span id="ticketTime"></span></p>
+        </div>
+
+        <!-- Сообщения чата -->
+        <div class="chat-messages" id="messages"></div>
+
+        <!-- Индикатор печатания -->
+        <div class="typing-indicator" id="typing"></div>
+
+        <!-- Поле ввода сообщения -->
+        <div class="chat-input">
+            <input type="text" id="messageInput"
+                   placeholder="Введите сообщение..."
+                   disabled
+                   maxlength="1000">
+            <button id="sendBtn" onclick="sendMessage()" disabled>
+                Отправить
+            </button>
+        </div>
+    </div>
+
+    <!-- Футер -->
+    <div class="footer">
+        © 2024 Служба поддержки. Все сообщения сохраняются.
+    </div>
+</div>
+
+<script>
+    // Генерация уникального ID клиента
+    const clientId = 'client_' + Math.random().toString(36).substr(2, 9);
+    const clientName = 'Клиент_' + Math.floor(Math.random() * 1000);
+
+    // Отображаем информацию о клиенте
+    document.getElementById('clientNameDisplay').textContent = clientName;
+    document.getElementById('clientIdDisplay').textContent = clientId;
+
+    // Переменные состояния
+    let stompClient = null;
+    let mySessionId = null;
+    let currentTicketId = null;
+    let currentSupportId = null;
+    let currentSupportName = null;
+    let typingTimer = null;
+    let messageHistory = [];
+
+    // Функция подключения к WebSocket
+    function connect() {
+        console.log('🔌 Подключение к серверу...');
+        updateConnectionStatus('connecting', 'Подключение...');
+
+        const socket = new SockJS('http://localhost:8080/ws-support');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;  // Отключаем подробные логи
+
+        stompClient.connect({}, function(frame) {
+            console.log('✅ Подключено к серверу');
+            updateConnectionStatus('online', 'Подключен');
+
+            // Получаем sessionId из URL
+            // Session ID передается в заголовках STOMP frame
+            mySessionId = stompClient.ws._transport.url.match(/\/ws-support\/([^\/]+)/)[1];
+            document.getElementById('sessionIdDisplay').textContent = mySessionId;
+
+            console.log('🆔 Session ID:', mySessionId);
+
+            // Подписываемся на персональный канал с нашим sessionId
+            stompClient.subscribe('/queue/support-user', function(message) {
+                const msg = JSON.parse(message.body);
+                console.log('📨 Получено сообщение:', msg);
+                handleIncomingMessage(msg);
+            });
+
+            // Подписываемся на индикатор печатания
+            stompClient.subscribe('/queue/support/typing-user', function(message) {
+                const msg = JSON.parse(message.body);
+                if (msg.text !== 'stop') {
+                    showTypingIndicator(msg.fromUserName + ' печатает...');
+                } else {
+                    showTypingIndicator('');
+                }
+            });
+
+        }, function(error) {
+            console.error('❌ Ошибка подключения:', error);
+            updateConnectionStatus('offline', 'Ошибка подключения');
+            setTimeout(connect, 5000);  // Пробуем переподключиться через 5 секунд
+        });
+    }
+
+    // Обновление статуса подключения
+    function updateConnectionStatus(status, text) {
+        const statusEl = document.getElementById('connectionStatus');
+        statusEl.className = 'status-badge status-' + status;
+        statusEl.textContent = text;
+    }
+
+    // Создание нового обращения
+    function createTicket() {
+        const subject = document.getElementById('subjectInput').value.trim();
+
+        if (!subject) {
+            alert('Пожалуйста, опишите вашу проблему');
+            return;
+        }
+
+        if (subject.length < 10) {
+            alert('Опишите проблему подробнее (минимум 10 символов)');
+            return;
+        }
+
+        if (!stompClient || !stompClient.connected) {
+            alert('Нет подключения к серверу. Пробуем переподключиться...');
+            connect();
+            setTimeout(() => createTicket(), 1000);
+            return;
+        }
+
+        // Блокируем кнопку создания
+        document.getElementById('createBtn').disabled = true;
+        document.getElementById('createBtn').textContent = 'Отправка...';
+
+        const message = {
+            fromUserId: clientId,
+            fromUserName: clientName,
+            text: subject
+        };
+
+        console.log('📤 Создание тикета:', message);
+
+        stompClient.send("/app/support.create", {}, JSON.stringify(message));
+
+        // Показываем чат
+        document.getElementById('ticketForm').style.display = 'none';
+        document.getElementById('chatContainer').style.display = 'block';
+
+        // Добавляем системное сообщение
+        addSystemMessage('✅ Запрос отправлен. Ожидайте подключения оператора...');
+    }
+
+    // Обработка входящих сообщений
+    function handleIncomingMessage(msg) {
+        displayMessage(msg);
+        messageHistory.push(msg);
+
+        // Обновляем информацию о тикете
+        if (msg.ticketId) {
+            currentTicketId = msg.ticketId;
+            document.getElementById('ticketNumber').textContent = msg.ticketId.substr(0, 8) + '...';
+
+            if (msg.type === 'TICKET_CREATED') {
+                document.getElementById('ticketSubject').textContent = msg.text;
+                document.getElementById('ticketTime').textContent = msg.timestamp || new Date().toLocaleTimeString();
+            }
+        }
+
+        // Обработка подключения оператора
+        if (msg.type === 'SUPPORT_JOINED') {
+            currentSupportId = msg.fromUserId;
+            currentSupportName = msg.fromUserName;
+
+            document.getElementById('supportInfo').innerHTML =
+                `👨‍💼 Оператор: <strong>${currentSupportName}</strong>`;
+            document.getElementById('supportStatus').className = 'status-badge status-online';
+            document.getElementById('supportStatus').textContent = 'На связи';
+
+            // Разблокируем ввод сообщений
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+
+            // Фокусируемся на поле ввода
+            document.getElementById('messageInput').focus();
+
+            addSystemMessage(`✅ Оператор ${currentSupportName} подключился к чату`);
+        }
+
+        // Обработка закрытия чата
+        if (msg.type === 'TICKET_CLOSED') {
+            document.getElementById('supportInfo').textContent = '💬 Чат завершен';
+            document.getElementById('supportStatus').className = 'status-badge status-offline';
+            document.getElementById('supportStatus').textContent = 'Завершен';
+            document.getElementById('messageInput').disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            addSystemMessage('🔒 Чат закрыт оператором. Спасибо за обращение!');
+        }
+    }
+
+    // Отображение сообщения в чате
+    function displayMessage(msg) {
+        const messagesDiv = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+
+        // Форматирование времени
+        const time = msg.timestamp || new Date().toLocaleTimeString();
+
+        if (msg.type === 'TICKET_CREATED') {
+            messageDiv.className = 'message system-message';
+            messageDiv.innerHTML = `
+                    <strong>📋 Запрос создан</strong><br>
+                    ${msg.text}<br>
+                    <span class="message-time">${time}</span>
+                `;
+        }
+        else if (msg.type === 'SUPPORT_JOINED') {
+            messageDiv.className = 'message system-message';
+            messageDiv.innerHTML = `
+                    <strong>👋 Оператор подключился</strong><br>
+                    ${msg.text}<br>
+                    <span class="message-time">${time}</span>
+                `;
+        }
+        else if (msg.type === 'TICKET_ACCEPTED') {
+            messageDiv.className = 'message system-message';
+            messageDiv.innerHTML = `
+                    <strong>✅ Чат начат</strong><br>
+                    ${msg.text}<br>
+                    <span class="message-time">${time}</span>
+                `;
+        }
+        else if (msg.type === 'TICKET_CLOSED') {
+            messageDiv.className = 'message system-message';
+            messageDiv.innerHTML = `
+                    <strong>🔒 Чат завершен</strong><br>
+                    ${msg.text}<br>
+                    <span class="message-time">${time}</span>
+                `;
+        }
+        else if (msg.type === 'CHAT') {
+            const isMyMessage = msg.fromUserId === clientId;
+            messageDiv.className = 'message ' +
+                (isMyMessage ? 'my-message' : 'support-message');
+
+            const senderName = isMyMessage ? 'Вы' : msg.fromUserName;
+
+            messageDiv.innerHTML = `
+                    <div class="message-sender">${senderName}</div>
+                    ${msg.text}
+                    <div class="message-time">${time}</div>
+                `;
+        }
+
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Добавление системного сообщения
+    function addSystemMessage(text) {
+        const messagesDiv = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message system-message';
+        messageDiv.innerHTML = `
+                <strong>ℹ️ Система</strong><br>
+                ${text}<br>
+                <span class="message-time">${new Date().toLocaleTimeString()}</span>
+            `;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Отправка сообщения
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+
+        if (!text) {
+            return;
+        }
+
+        if (!stompClient || !stompClient.connected) {
+            alert('Нет подключения к серверу');
+            return;
+        }
+
+        if (!currentTicketId) {
+            alert('Чат не активен');
+            return;
+        }
+
+        if (!currentSupportId) {
+            alert('Оператор еще не подключился');
+            return;
+        }
+
+        const message = {
+            ticketId: currentTicketId,
+            fromUserId: clientId,
+            fromUserName: clientName,
+            toUserId: currentSupportId,
+            text: text
+        };
+
+        console.log('📤 Отправка сообщения:', message);
+
+        stompClient.send("/app/support.chat", {}, JSON.stringify(message));
+
+        // Отображаем свое сообщение сразу
+        const msg = {
+            ...message,
+            type: 'CHAT',
+            timestamp: new Date().toLocaleTimeString()
+        };
+        displayMessage(msg);
+
+        input.value = '';
+    }
+
+    // Индикатор печатания
+    document.getElementById('messageInput').onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+            return;
+        }
+
+        if (stompClient && stompClient.connected && currentTicketId && currentSupportId) {
+            stompClient.send("/app/support.typing", {}, JSON.stringify({
+                ticketId: currentTicketId,
+                fromUserId: clientId,
+                fromUserName: clientName,
+                toUserId: currentSupportId
+            }));
+
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                stompClient.send("/app/support.typing", {}, JSON.stringify({
+                    ticketId: currentTicketId,
+                    fromUserId: clientId,
+                    fromUserName: clientName,
+                    toUserId: currentSupportId,
+                    text: 'stop'
+                }));
+            }, 1000);
+        }
+    };
+
+    // Показать индикатор печатания
+    function showTypingIndicator(text) {
+        document.getElementById('typing').textContent = text;
+    }
+
+    // Обработка закрытия страницы
+    window.onbeforeunload = function() {
+        if (stompClient && stompClient.connected) {
+            if (currentTicketId) {
+                stompClient.send("/app/support.close", {}, JSON.stringify({
+                    ticketId: currentTicketId,
+                    fromUserId: clientId
+                }));
+            }
+            stompClient.disconnect();
+        }
+    };
+
+    // Запуск подключения при загрузке страницы
+    window.onload = function() {
+        connect();
+
+        // Добавляем приветственное сообщение
+        setTimeout(() => {
+            if (!currentTicketId) {
+                addSystemMessage('👋 Добро пожаловать! Создайте обращение, чтобы начать чат с поддержкой.');
+            }
+        }, 1000);
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 10
+    accept-count: 0
+    max-connections: 6
+
+
+
+spring:
+  application:
+    name: HelloWorldApp
+
+
