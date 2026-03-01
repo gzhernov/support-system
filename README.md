@@ -67,3 +67,12 @@ Architected to support **100 million+ users** with:
 ## 🛠️ Technology Stack
 
 ### Backend
+
+✅ Java 17/21
+✅ Spring Boot 3.x
+✅ Spring WebSocket
+✅ Spring Security
+✅ JPA / Hibernate
+✅ RabbitMQ / Kafka
+✅ Redis
+✅ PostgreSQL / MongoDB
