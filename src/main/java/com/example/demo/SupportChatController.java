@@ -76,14 +76,38 @@ public class SupportChatController {
                 ChatMessage.MessageType.TICKET_CREATED
         );
         response.setTicketId(ticket.getId());
-
         sendToUserAllSessions(userId, "/queue/support", response);
 
-        // Проверяем, есть ли свободный оператор
-        User availableSupport = queueService.findAvailableSupport();
-        if (availableSupport != null) {
-            assignSupportToTicket(ticket.getId(), availableSupport.getId());
-        }
+        // *** ВАЖНО: Отправляем уведомление ВСЕМ операторам о новом тикете ***
+        notifyOperatorsAboutNewTicket(ticket, client, message.getText());
+
+        // Проверяем, есть ли свободный оператор для немедленного назначения
+//        User availableSupport = queueService.findAvailableSupport();
+//        if (availableSupport != null) {
+//            assignSupportToTicket(ticket.getId(), availableSupport.getId());
+//        }
+    }
+
+    /**
+     * Отправляет уведомление всем операторам о новом тикете
+     */
+    private void notifyOperatorsAboutNewTicket(SupportTicket ticket, User client, String initialMessage) {
+        ChatMessage queueNotification = new ChatMessage(
+                "Система",
+                "Новый запрос от " + client.getName(),
+                ChatMessage.MessageType.TICKET_CREATED
+        );
+        queueNotification.setTicketId(ticket.getId());
+        queueNotification.setFromUserId(client.getId());
+        queueNotification.setFromUserName(client.getName());
+        queueNotification.setText(initialMessage); // текст обращения
+
+        System.out.println("📢 Отправка уведомления операторам о новом тикете: " + ticket.getId());
+        System.out.println("   Клиент: " + client.getName());
+        System.out.println("   Текст: " + initialMessage);
+
+        // Отправляем в общий топик для всех операторов
+        messagingTemplate.convertAndSend("/topic/support/queue", queueNotification);
     }
 
     @MessageMapping("/support.accept")
@@ -121,6 +145,8 @@ public class SupportChatController {
         User support = queueService.getUser(supportId);
 
         if (ticket == null || support == null) return;
+
+        System.out.println("✅ Назначение оператора " + support.getName() + " на тикет " + ticketId);
 
         // Клиенту - на ВСЕ его сессии
         ChatMessage clientMsg = new ChatMessage(
@@ -172,6 +198,7 @@ public class SupportChatController {
 
         // Отправляем получателю на ВСЕ его сессии
         if (recipientId != null) {
+            System.out.println("💬 Отправка сообщения от " + sender.getName() + " к " + recipientId);
             sendToUserAllSessions(recipientId, "/queue/support", message);
         }
     }
@@ -187,7 +214,7 @@ public class SupportChatController {
         String recipientId = sender.getType() == User.UserType.CLIENT ?
                 ticket.getSupportId() : ticket.getClientId();
 
-        if (recipientId != null && !"stop".equals(message.getText())) {
+        if (recipientId != null) {
             sendToUserAllSessions(recipientId, "/queue/support/typing", message);
         }
     }
@@ -212,11 +239,13 @@ public class SupportChatController {
             if (ticket.getSupportId() != null) {
                 sendToUserAllSessions(ticket.getSupportId(), "/queue/support", closeMsg);
             }
+
+            System.out.println("🔒 Тикет " + ticket.getId() + " закрыт");
         }
     }
 
     /**
-     * НОВЫЙ МЕТОД: Отправка сообщения на ВСЕ активные сессии пользователя
+     * Отправка сообщения на ВСЕ активные сессии пользователя
      */
     private void sendToUserAllSessions(String userId, String destination, Object message) {
         Set<String> sessions = queueService.getUserSessions(userId);
@@ -237,7 +266,7 @@ public class SupportChatController {
     }
 
     /**
-     * НОВЫЙ МЕТОД: Обработка отключения сессии
+     * Обработка отключения сессии
      */
     @MessageMapping("/support.disconnect")
     public void handleDisconnect(@Payload ChatMessage message, StompHeaderAccessor headerAccessor) {
@@ -247,8 +276,6 @@ public class SupportChatController {
         if (userId != null) {
             queueService.unregisterSession(sessionId);
             System.out.println("👋 Пользователь " + userId + " отключился (сессия: " + sessionId + ")");
-
-            // Можно добавить логику для отметки пользователя как офлайн
         }
     }
 }

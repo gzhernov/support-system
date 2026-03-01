@@ -46,7 +46,7 @@ public class SupportQueueService {
         // Добавим несколько тестовых сотрудников поддержки
         addSupportUser("support1", "Анна", true);
         addSupportUser("support2", "Иван", true);
-        addSupportUser("support3", "Мария", false); // Занята
+        addSupportUser("support3", "Мария", true); // Занята
     }
 
     // Добавление сотрудника поддержки
@@ -92,6 +92,11 @@ public class SupportQueueService {
                 .filter(User::isAvailable)
                 .findFirst()
                 .orElse(null);
+    }
+
+    // Получение всех операторов поддержки
+    public Collection<User> getAllSupportOperators() {
+        return supportStaff.values();
     }
 
     // Назначение оператора на тикет

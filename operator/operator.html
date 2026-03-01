@@ -1,0 +1,277 @@
+<html>
+<head>
+    <title>Панель оператора поддержки</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/operator.css">
+    <!-- WebSocket библиотеки -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <!-- Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<!-- Экран входа -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="fas fa-headset"></i>
+            </div>
+            <h2>Вход в панель оператора</h2>
+            <p class="login-subtitle">Выберите свой профиль для входа</p>
+        </div>
+
+        <div class="login-form">
+            <div class="form-group">
+                <label for="operatorSelect">
+                    <i class="fas fa-user-tie"></i> Оператор:
+                </label>
+                <div class="select-wrapper">
+                    <select id="operatorSelect" class="operator-select" onchange="validateLoginForm()">
+                        <option value="">-- Выберите оператора --</option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="operatorStatus">
+                    <i class="fas fa-circle"></i> Начальный статус:
+                </label>
+                <div class="status-selector">
+                    <label class="status-option">
+                        <input type="radio" name="initialStatus" value="available" checked>
+                        <span class="status-badge available">🟢 Свободен</span>
+                    </label>
+                    <label class="status-option">
+                        <input type="radio" name="initialStatus" value="busy">
+                        <span class="status-badge busy">🔴 Занят</span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="login-btn" id="loginBtn" onclick="handleLogin()" disabled>
+                <i class="fas fa-sign-in-alt"></i> Войти в систему
+            </button>
+        </div>
+
+        <div class="login-footer">
+            <div class="operators-status" id="operatorsStatus">
+                <i class="fas fa-users"></i>
+                <span>Загрузка операторов...</span>
+            </div>
+            <div class="loading-spinner hidden" id="loginSpinner">
+                <i class="fas fa-spinner fa-spin"></i> Подключение...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Основное приложение (скрыто до входа) -->
+<div class="app-container hidden" id="appContainer">
+    <!-- Шапка -->
+    <header class="app-header">
+        <h1>
+            <span>👨‍💼 Панель оператора</span>
+            <span class="header-badge" id="operatorNameHeader"></span>
+        </h1>
+        <div class="operator-info">
+            <div class="operator-badge" id="operatorStatus">
+                <span class="status-dot">🟢</span>
+                <span class="status-text" id="operatorStatusText">Свободен</span>
+            </div>
+            <div class="operator-badge">
+                <span>👤 <strong id="operatorName">Загрузка...</strong></span>
+            </div>
+            <div class="operator-badge">
+                <span>🆔 <strong id="operatorId">Загрузка...</strong></span>
+            </div>
+            <button class="btn-toggle-status" id="toggleStatusBtn" onclick="toggleOperatorStatus()">
+                <i class="fas fa-pause"></i> Занять себя
+            </button>
+            <button class="btn-logout" onclick="logout()" title="Выйти">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Основной контент (остается без изменений) -->
+    <div class="main-content">
+        <!-- Левая колонка - очередь и тикеты -->
+        <aside class="tickets-sidebar">
+            <!-- Блок статистики -->
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">В очереди:</span>
+                    <span class="stat-value" id="queueCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Активные:</span>
+                    <span class="stat-value" id="activeCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Сессии:</span>
+                    <span class="stat-value" id="sessionsCount">0</span>
+                </div>
+            </div>
+
+            <!-- Кнопка взять следующий -->
+            <div class="queue-actions">
+                <button class="take-next-btn" id="takeNextBtn" onclick="takeNextTicket()">
+                    <i class="fas fa-hand-pointer"></i> Взять следующий
+                    <span class="next-badge" id="nextTicketBadge">0</span>
+                </button>
+            </div>
+
+            <!-- Табы -->
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="queue" onclick="switchTab('queue')">
+                    <i class="fas fa-clock"></i> Очередь
+                    <span class="tab-badge" id="queueTabBadge">0</span>
+                </button>
+                <button class="tab-btn" data-tab="active" onclick="switchTab('active')">
+                    <i class="fas fa-comments"></i> Активные
+                    <span class="tab-badge" id="activeTabBadge">0</span>
+                </button>
+                <button class="tab-btn" data-tab="closed" onclick="switchTab('closed')">
+                    <i class="fas fa-check-circle"></i> Закрытые
+                    <span class="tab-badge" id="closedTabBadge">0</span>
+                </button>
+                <button class="tab-btn" data-tab="all" onclick="switchTab('all')">
+                    <i class="fas fa-list"></i> Все
+                </button>
+            </div>
+
+            <!-- Список тикетов -->
+            <div class="tickets-list" id="ticketsList">
+                <!-- Динамически заполняется JS -->
+            </div>
+        </aside>
+
+        <!-- Правая колонка - чат -->
+        <main class="chat-area" id="chatArea">
+            <!-- Пустое состояние -->
+            <div class="empty-state" id="emptyState">
+                <div class="empty-state-icon">💬</div>
+                <h3>Выберите обращение</h3>
+                <p>Кликните на обращение в списке слева<br>или возьмите следующий из очереди</p>
+            </div>
+
+            <!-- Активный чат (скрыт по умолчанию) -->
+            <div class="chat-container hidden" id="activeChat">
+                <!-- Шапка чата -->
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <h3>
+                            <span id="activeTicketTitle">Загрузка...</span>
+                            <span class="client-badge" id="clientBadge">
+                                <span class="client-avatar" id="clientAvatar">👤</span>
+                                <span id="clientName">Клиент</span>
+                            </span>
+                        </h3>
+                        <div class="ticket-meta-info">
+                            <span class="ticket-id" id="activeTicketId">#загрузка</span>
+                            <span class="ticket-time" id="activeTicketTime">открыт: --:--</span>
+                            <span class="client-sessions" id="clientSessions">
+                                <i class="fas fa-globe"></i> <span id="clientSessionsCount">1</span> сессий
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <span class="chat-status" id="activeTicketStatus">В работе</span>
+                        <button class="btn-close-ticket" id="closeTicketBtn" onclick="closeCurrentTicket()">
+                            <i class="fas fa-lock"></i> Закрыть
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Сообщения -->
+                <div class="chat-messages" id="chatMessages"></div>
+
+                <!-- Индикатор печатания -->
+                <div class="typing-indicator hidden" id="typingIndicator">
+                    <span class="typing-client" id="typingClient"></span>
+                    <span>печатает...</span>
+                </div>
+
+                <!-- Поле ввода -->
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
+                    <button id="sendButton" disabled>
+                        <i class="fas fa-paper-plane"></i> Отправить
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Модальное окно деталей тикета -->
+<div class="modal" id="ticketDetailsModal">
+    <div class="modal-content modal-lg">
+        <h2><i class="fas fa-ticket-alt"></i> Детали обращения</h2>
+
+        <div class="ticket-details">
+            <div class="detail-row">
+                <span class="detail-label">ID тикета:</span>
+                <span class="detail-value" id="detailTicketId">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Клиент:</span>
+                <span class="detail-value" id="detailClientName">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">ID клиента:</span>
+                <span class="detail-value" id="detailClientId">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Статус:</span>
+                <span class="detail-value" id="detailStatus">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Создан:</span>
+                <span class="detail-value" id="detailCreatedAt">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Принят:</span>
+                <span class="detail-value" id="detailAcceptedAt">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Сообщений:</span>
+                <span class="detail-value" id="detailMessagesCount">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Сессий клиента:</span>
+                <span class="detail-value" id="detailClientSessions">-</span>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeTicketDetailsModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Уведомления -->
+<div class="toast" id="toast">
+    <i class="fas fa-info-circle" id="toastIcon"></i>
+    <span id="toastMessage">Уведомление</span>
+</div>
+
+<!-- Шаблоны для сообщений -->
+<template id="messageTemplate">
+    <div class="message">
+        <div class="message-header">
+            <span class="message-sender"></span>
+            <span class="message-session" title="Сессия"></span>
+        </div>
+        <div class="message-bubble"></div>
+        <div class="message-time"></div>
+    </div>
+</template>
+
+<!-- Скрипты -->
+<script src="js/operator.js"></script>
+</body>
+</html>
