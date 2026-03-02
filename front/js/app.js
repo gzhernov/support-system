@@ -1,6 +1,7 @@
 // ======== КОНФИГУРАЦИЯ ========
 const CONFIG = {
     WS_URL: 'http://localhost:8080/ws-support',
+    API_URL: 'http://localhost:8080/api',
     RECONNECT_DELAY: 3000,
     MAX_RECONNECT_ATTEMPTS: 5
 };
@@ -15,7 +16,8 @@ const AppState = {
     tickets: [],
     reconnectAttempts: 0,
     connected: false,
-    typingTimer: null
+    typingTimer: null,
+    currentClientTab: 'current' // 'current', 'archived', 'all'
 };
 
 // ======== ИНИЦИАЛИЗАЦИЯ ========
@@ -30,10 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
     connectWebSocket();
 
     // Загружаем историю обращений
-    loadTickets();
+    loadTicketsHistory();
 
     // Настраиваем обработчики
     setupEventListeners();
+
+    // Устанавливаем активную вкладку
+    switchClientTab('current');
 });
 
 // Безопасная установка текста элемента
@@ -64,7 +69,7 @@ function connectWebSocket() {
 
     const socket = new SockJS(CONFIG.WS_URL);
     AppState.stompClient = Stomp.over(socket);
-    AppState.stompClient.debug = null; // Отключаем логи STOMP
+    AppState.stompClient.debug = null;
 
     AppState.stompClient.connect({}, function(frame) {
         console.log('✅ WebSocket подключен');
@@ -117,12 +122,10 @@ function updateConnectionStatus(status, text) {
 function extractSessionId(socket) {
     try {
         const url = socket._transport.url;
-        // Правильно: берем предпоследний элемент (перед /websocket)
         const parts = url.split('/');
         const realSessionId = parts[parts.length - 2];
 
         console.log('🌐 Полный URL:', url);
-        console.log('📦 server-id (для кластера):', parts[parts.length - 3]);
         console.log('🆔 Настоящий sessionId:', realSessionId);
 
         AppState.sessionId = realSessionId;
@@ -181,14 +184,96 @@ function handleDisconnect() {
     }
 }
 
-// ======== ЗАГРУЗКА ДАННЫХ ========
-function loadTickets() {
-    // В реальном приложении здесь был бы REST запрос
-    // Пока используем заглушку
-    setTimeout(() => {
-        // Здесь будут загруженные с сервера тикеты
+// ======== ЗАГРУЗКА ИСТОРИИ ТИКЕТОВ ========
+// ======== ЗАГРУЗКА ИСТОРИИ ТИКЕТОВ ========
+async function loadTicketsHistory() {
+    try {
+        console.log('📡 Загрузка истории тикетов...');
+
+        // Загружаем текущие тикеты (открытые и в работе)
+        const currentResponse = await fetch(`${CONFIG.API_URL}/tickets/client/${AppState.clientId}/current`);
+
+        if (!currentResponse.ok) {
+            throw new Error(`HTTP error! status: ${currentResponse.status}`);
+        }
+
+        const currentTickets = await currentResponse.json();
+        console.log(`✅ Загружено ${currentTickets.length} текущих тикетов`);
+
+        // Загружаем архивные тикеты (закрытые)
+        const archivedResponse = await fetch(`${CONFIG.API_URL}/tickets/client/${AppState.clientId}/archived`);
+
+        if (!archivedResponse.ok) {
+            throw new Error(`HTTP error! status: ${archivedResponse.status}`);
+        }
+
+        const archivedTickets = await archivedResponse.json();
+        console.log(`✅ Загружено ${archivedTickets.length} архивных тикетов`);
+
+        // Объединяем все тикеты
+        const allTickets = [...currentTickets, ...archivedTickets];
+
+        // Преобразуем серверные тикеты в формат клиента
+        AppState.tickets = allTickets.map(ticket => ({
+            id: ticket.id,
+            title: ticket.subject || 'Обращение',
+            status: mapServerStatus(ticket.status),
+            operator: ticket.supportId,
+            operatorName: ticket.supportName,
+            createdAt: ticket.createdAt,
+            updatedAt: ticket.updatedAt || ticket.createdAt,
+            unread: 0,
+            messages: []
+        }));
+
         renderTicketsList();
-    }, 500);
+        updateTabBadges();
+
+    } catch (error) {
+        console.error('❌ Ошибка загрузки истории тикетов:', error);
+        showToast('Не удалось загрузить историю обращений', 'error');
+    }
+}
+
+// Загрузка сообщений для конкретного тикета
+async function loadTicketMessages(ticketId) {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/tickets/${ticketId}/messages`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const messages = await response.json();
+        console.log(`✅ Загружено ${messages.length} сообщений для тикета ${ticketId}`);
+
+        const ticket = AppState.tickets.find(t => t.id === ticketId);
+        if (ticket) {
+            ticket.messages = messages.map(msg => ({
+                id: msg.id,
+                sender: msg.fromUserId === AppState.clientId ? 'client' : 'support',
+                operator: msg.fromUserId !== AppState.clientId ? msg.fromUserId : null,
+                text: msg.text,
+                time: msg.timestamp
+            }));
+
+            if (AppState.currentTicketId === ticketId) {
+                renderMessages(ticket.messages, ticket.operator);
+            }
+        }
+
+    } catch (error) {
+        console.error(`❌ Ошибка загрузки сообщений для тикета ${ticketId}:`, error);
+    }
+}
+
+function mapServerStatus(serverStatus) {
+    const statusMap = {
+        'OPEN': 'open',
+        'IN_PROGRESS': 'in-progress',
+        'CLOSED': 'closed'
+    };
+    return statusMap[serverStatus] || 'open';
 }
 
 // ======== ОБРАБОТКА СООБЩЕНИЙ ========
@@ -220,17 +305,29 @@ function handleTicketCreated(msg) {
     // Создаем новый тикет в локальном состоянии
     const newTicket = {
         id: msg.ticketId,
-        title: msg.text || 'Новое обращение',
+        title: msg.title || 'Новое обращение',
         status: 'open',
         operator: null,
         operatorName: null,
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         unread: 0,
         messages: []
     };
 
+    // Добавляем первое сообщение если есть
+    if (msg.text) {
+        newTicket.messages.push({
+            id: 1,
+            sender: 'client',
+            text: msg.text,
+            time: msg.timestamp || new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })
+        });
+    }
+
     AppState.tickets.unshift(newTicket);
     renderTicketsList();
+    updateTabBadges();
 
     // Открываем созданный тикет
     openTicket(msg.ticketId);
@@ -250,9 +347,19 @@ function handleSupportJoined(msg) {
 
         if (AppState.currentTicketId === ticket.id) {
             updateCurrentTicket(ticket);
+
+            // Активируем поле ввода
+            const input = document.getElementById('messageInput');
+            const btn = document.getElementById('sendButton');
+            if (input) {
+                input.disabled = false;
+                input.placeholder = "Введите сообщение...";
+            }
+            if (btn) btn.disabled = false;
         }
 
         renderTicketsList();
+        updateTabBadges();
         showToast(`Оператор ${msg.fromUserName} подключился`, 'success');
     }
 }
@@ -284,6 +391,7 @@ function handleChatMessage(msg) {
     }
 
     renderTicketsList();
+    updateTabBadges();
 }
 
 function handleTicketClosed(msg) {
@@ -296,11 +404,15 @@ function handleTicketClosed(msg) {
             updateCurrentTicket(ticket);
             const input = document.getElementById('messageInput');
             const btn = document.getElementById('sendButton');
-            if (input) input.disabled = true;
+            if (input) {
+                input.disabled = true;
+                input.placeholder = "Чат закрыт";
+            }
             if (btn) btn.disabled = true;
         }
 
         renderTicketsList();
+        updateTabBadges();
         showToast('Чат закрыт', 'info');
     }
 }
@@ -315,6 +427,7 @@ function handleTicketAccepted(msg) {
         }
 
         renderTicketsList();
+        updateTabBadges();
     }
 }
 
@@ -332,6 +445,11 @@ function handleTypingIndicator(msg) {
             typingOperator.textContent = msg.fromUserName;
         }
         typingEl.classList.remove('hidden');
+
+        // Автоматически скрываем через 3 секунды
+        setTimeout(() => {
+            typingEl.classList.add('hidden');
+        }, 3000);
     }
 }
 
@@ -348,6 +466,22 @@ function addSystemMessageToTicket(ticketId, text) {
     });
 }
 
+// ======== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ========
+function switchClientTab(tabName) {
+    AppState.currentClientTab = tabName;
+
+    // Обновляем активный класс у кнопок
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    renderTicketsList();
+}
+
 // ======== ОТРИСОВКА ========
 function renderTicketsList() {
     const container = document.getElementById('ticketsList');
@@ -355,32 +489,56 @@ function renderTicketsList() {
 
     container.innerHTML = '';
 
-    // Сортируем по дате обновления
-    const sortedTickets = [...AppState.tickets].sort((a, b) =>
-        new Date(b.updatedAt) - new Date(a.updatedAt)
-    );
+    // Фильтруем тикеты в зависимости от выбранной вкладки
+    let ticketsToShow = [];
 
-    sortedTickets.forEach(ticket => {
-        const ticketEl = createTicketElement(ticket);
-        container.appendChild(ticketEl);
-    });
+    switch (AppState.currentClientTab) {
+        case 'current':
+            // Текущие: открытые и в работе
+            ticketsToShow = AppState.tickets.filter(ticket => ticket.status !== 'closed');
+            break;
+        case 'archived':
+            // Архивные: только закрытые
+            ticketsToShow = AppState.tickets.filter(ticket => ticket.status === 'closed');
+            break;
+        case 'all':
+        default:
+            // Все тикеты
+            ticketsToShow = [...AppState.tickets];
+            break;
+    }
 
+    // Сортируем по дате обновления (новые сверху)
+    ticketsToShow.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+    if (ticketsToShow.length === 0) {
+        container.innerHTML = '<div class="empty-list">Нет обращений</div>';
+    } else {
+        ticketsToShow.forEach(ticket => {
+            container.appendChild(createTicketElement(ticket));
+        });
+    }
+
+    // Обновляем счетчик тикетов
     setElementText('ticketCount', AppState.tickets.length);
 }
 
 function createTicketElement(ticket) {
     const ticketEl = document.createElement('div');
-    ticketEl.className = `ticket-item ${ticket.id === AppState.currentTicketId ? 'active' : ''}`;
+
+    // Добавляем класс для архивных тикетов
+    const isArchived = ticket.status === 'closed';
+    ticketEl.className = `ticket-item ${isArchived ? 'archived' : ''} ${ticket.id === AppState.currentTicketId ? 'active' : ''}`;
     ticketEl.onclick = () => openTicket(ticket.id);
 
     const statusText = getStatusText(ticket.status);
-    const date = formatDate(ticket.updatedAt);
+    const date = formatDate(ticket.updatedAt || ticket.createdAt);
 
     const operatorHtml = ticket.operator
-        ? `<div class="ticket-operator"><span>${ticket.operatorName}</span></div>`
+        ? `<div class="ticket-operator"><span class="operator-avatar">${ticket.operatorName?.charAt(0) || '👤'}</span><span>${ticket.operatorName || 'Оператор'}</span></div>`
         : '<div class="no-operator-badge"><span>⏳</span><span>Ожидание</span></div>';
 
-    const unreadHtml = ticket.unread > 0
+    const unreadHtml = ticket.unread > 0 && !isArchived
         ? `<span class="unread-indicator">${ticket.unread}</span>`
         : '';
 
@@ -392,10 +550,10 @@ function createTicketElement(ticket) {
                 ${unreadHtml}
             </div>
         </div>
-        <div class="ticket-title">${ticket.title}</div>
-        <div class="ticket-preview">${ticket.title}</div>
+        <div class="ticket-title">${ticket.title || 'Обращение'}</div>
+        <div class="ticket-preview">${ticket.title || 'Нет описания'}</div>
         <div class="ticket-meta">
-            <span>#${ticket.id.substring(0, 8)}</span>
+            <span>#${ticket.id?.substring(0, 8) || 'новый'}</span>
             <span>${date}</span>
         </div>
     `;
@@ -414,9 +572,19 @@ function getStatusText(status) {
 }
 
 function formatDate(dateString) {
+    if (!dateString) return 'только что';
     return new Date(dateString).toLocaleString('ru', {
         day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
     });
+}
+
+// ======== ОБНОВЛЕНИЕ БЕЙДЖЕЙ ========
+function updateTabBadges() {
+    const currentCount = AppState.tickets.filter(t => t.status !== 'closed').length;
+    const archivedCount = AppState.tickets.filter(t => t.status === 'closed').length;
+
+    setElementText('currentTabBadge', currentCount);
+    setElementText('archivedTabBadge', archivedCount);
 }
 
 // ======== УПРАВЛЕНИЕ ТИКЕТАМИ ========
@@ -436,31 +604,39 @@ function openTicket(ticketId) {
     // Заполняем информацию
     setElementText('activeTicketTitle', ticket.title);
     setElementText('activeTicketId', `#${ticket.id.substring(0, 8)}`);
-    setElementText('activeTicketStatus', getStatusText(ticket.status));
 
+    // Обновляем статус
     const statusEl = document.getElementById('activeTicketStatus');
     if (statusEl) {
-        statusEl.className = `chat-status status-${ticket.status}`;
+        statusEl.className = `chat-status ${getChatStatusClass(ticket.status)}`;
+        statusEl.textContent = getStatusText(ticket.status);
     }
 
     // Обновляем информацию об операторе
     updateOperatorBadge(ticket);
 
-    // *** ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ ***
-    // Всегда разрешаем ввод, независимо от наличия оператора
+    // Управление полем ввода
     const input = document.getElementById('messageInput');
     const btn = document.getElementById('sendButton');
-    if (input) {
-        input.disabled = false;  // Убрали условие ticket.operator
-        // Меняем плейсхолдер в зависимости от ситуации
-        input.placeholder = ticket.operator
-            ? "Введите сообщение..."
-            : "Оператор еще не подключен, но вы можете писать...";
-    }
-    if (btn) btn.disabled = false;  // Убрали условие ticket.operator
 
-    // Отображаем сообщения
-    renderMessages(ticket.messages || [], ticket.operator);
+    if (input && btn) {
+        const isClosed = ticket.status === 'closed';
+        input.disabled = isClosed;
+        btn.disabled = isClosed;
+        input.placeholder = isClosed
+            ? "Чат закрыт"
+            : (ticket.operator ? "Введите сообщение..." : "Оператор еще не подключен, но вы можете писать...");
+    }
+
+    // Загружаем сообщения для этого тикета
+    loadTicketMessages(ticketId);
+}
+
+function getChatStatusClass(status) {
+    if (status === 'open') return 'status-waiting';
+    if (status === 'in-progress') return 'status-active';
+    if (status === 'closed') return 'status-closed';
+    return 'status-waiting';
 }
 
 function updateOperatorBadge(ticket) {
@@ -473,8 +649,8 @@ function updateOperatorBadge(ticket) {
     if (ticket.operator) {
         badge.style.display = 'inline-flex';
         nameSpan.textContent = ticket.operatorName;
-        avatar.textContent = ticket.operatorName.charAt(0);
-        avatar.style.background = '#667eea';
+        avatar.textContent = ticket.operatorName?.charAt(0) || '👤';
+        avatar.style.background = '#3498db';
         avatar.style.color = 'white';
     } else {
         badge.style.display = 'inline-flex';
@@ -491,16 +667,20 @@ function renderMessages(messages, currentOperator) {
 
     container.innerHTML = '';
 
-    if (!currentOperator && messages.length === 0) {
-        container.appendChild(createSystemMessage(
-            '⏳ Ожидание оператора',
-            'Ваше обращение принято. Оператор подключится в ближайшее время.'
-        ));
+    if (messages.length === 0) {
+        if (!currentOperator) {
+            container.appendChild(createSystemMessage(
+                '⏳ Ожидание оператора',
+                'Ваше обращение принято. Оператор подключится в ближайшее время.'
+            ));
+        } else {
+            container.innerHTML = '<div class="no-messages">Нет сообщений. Напишите первое сообщение.</div>';
+        }
+    } else {
+        messages.forEach(msg => {
+            container.appendChild(createMessageElement(msg));
+        });
     }
-
-    messages.forEach(msg => {
-        container.appendChild(createMessageElement(msg));
-    });
 
     container.scrollTop = container.scrollHeight;
 }
@@ -537,11 +717,12 @@ function createSystemMessage(title, text) {
 function updateCurrentTicket(ticket) {
     setElementText('activeTicketTitle', ticket.title);
     setElementText('activeTicketId', `#${ticket.id.substring(0, 8)}`);
-    setElementText('activeTicketStatus', getStatusText(ticket.status));
 
+    // Обновляем статус
     const statusEl = document.getElementById('activeTicketStatus');
     if (statusEl) {
-        statusEl.className = `chat-status status-${ticket.status}`;
+        statusEl.className = `chat-status ${getChatStatusClass(ticket.status)}`;
+        statusEl.textContent = getStatusText(ticket.status);
     }
 
     updateOperatorBadge(ticket);
@@ -561,8 +742,8 @@ function closeNewTicketModal() {
     if (modal) {
         modal.classList.remove('active');
     }
-    setElementText('ticketTitle', '');
-    setElementText('ticketDescription', '');
+    document.getElementById('ticketTitle').value = '';
+    document.getElementById('ticketDescription').value = '';
 }
 
 function createNewTicket() {
@@ -605,8 +786,8 @@ function setupEventListeners() {
 
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
-        messageInput.onkeypress = handleMessageKeyPress;
-        messageInput.oninput = handleTyping;
+        messageInput.addEventListener('keypress', handleMessageKeyPress);
+        messageInput.addEventListener('input', handleTyping);
     }
 }
 

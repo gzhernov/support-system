@@ -148,53 +148,6 @@
     animation: pulse 1s infinite;
 }
 
-/* Табы */
-.tabs-header {
-    display: flex;
-    padding: 0 15px;
-    gap: 5px;
-    border-bottom: 1px solid #e2e8f0;
-    background: white;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 12px 5px;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    cursor: pointer;
-    font-size: 13px;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: all 0.2s;
-}
-
-.tab-btn i {
-    font-size: 14px;
-}
-
-.tab-btn.active {
-    color: #3498db;
-    border-bottom-color: #3498db;
-    font-weight: 600;
-}
-
-.tab-badge {
-    background: #e2e8f0;
-    color: #475569;
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-size: 10px;
-}
-
-.tab-btn.active .tab-badge {
-    background: #3498db;
-    color: white;
-}
 
 /* Специфичные статусы для оператора */
 .status-OPEN { background: #fef3c7; color: #92400e; }
@@ -403,16 +356,6 @@
 
 .ticket-details-btn:hover {
     color: #3498db;
-}
-
-/* Пустые состояния */
-.empty-list,
-.no-messages {
-    text-align: center;
-    color: #94a3b8;
-    padding: 30px;
-    font-size: 14px;
-    font-style: italic;
 }
 
 /* Сессия в сообщении */

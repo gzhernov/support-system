@@ -1,6 +1,7 @@
 package com.example.demo.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class SupportTicket {
     private String id;
@@ -11,8 +12,10 @@ public class SupportTicket {
     private LocalDateTime createdAt;
     private LocalDateTime acceptedAt;
     private LocalDateTime closedAt;
+    private LocalDateTime updatedAt;
     private TicketStatus status;
     private String subject;
+    private String description;
 
     public enum TicketStatus {
         OPEN,           // Открыт, ждет оператора
@@ -26,6 +29,7 @@ public class SupportTicket {
         this.clientName = clientName;
         this.subject = subject;
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
         this.status = TicketStatus.OPEN;
     }
 
@@ -46,15 +50,26 @@ public class SupportTicket {
     public void setSupportName(String supportName) { this.supportName = supportName; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
     public LocalDateTime getAcceptedAt() { return acceptedAt; }
     public void setAcceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; }
 
     public LocalDateTime getClosedAt() { return closedAt; }
     public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
 
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     public TicketStatus getStatus() { return status; }
-    public void setStatus(TicketStatus status) { this.status = status; }
+    public void setStatus(TicketStatus status) {
+        this.status = status;
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

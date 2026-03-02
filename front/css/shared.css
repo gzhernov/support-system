@@ -12,6 +12,20 @@ body {
     padding: 20px;
 }
 
+:root {
+    --primary-color: #3498db;
+    --primary-dark: #2980b9;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --gray-light: #f8fafc;
+    --gray: #e2e8f0;
+    --gray-dark: #64748b;
+    --border-color: #e2e8f0;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+}
+
 /* ======== УТИЛИТЫ ======== */
 .hidden {
     display: none !important;
@@ -83,6 +97,79 @@ body {
 .toast.error { border-left: 4px solid #e74c3c; }
 .toast.info { border-left: 4px solid #3498db; }
 .toast.warning { border-left: 4px solid #f39c12; }
+
+
+/* ======== ВКЛАДКИ (унифицированные) ======== */
+.tabs-header {
+    display: flex;
+    padding: 0 15px;
+    gap: 5px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    background: white;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 5px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--gray-dark, #64748b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.tab-btn i {
+    font-size: 14px;
+}
+
+.tab-btn.active {
+    color: var(--primary-color, #3498db);
+    border-bottom-color: var(--primary-color, #3498db);
+    font-weight: 600;
+}
+
+.tab-badge {
+    background: var(--gray, #e2e8f0);
+    color: var(--text-secondary, #475569);
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+.tab-btn.active .tab-badge {
+    background: var(--primary-color, #3498db);
+    color: white;
+}
+
+
+/* Пустой список */
+.empty-list,
+.no-messages {
+    text-align: center;
+    color: var(--gray-dark, #94a3b8);
+    padding: 40px 20px;
+    font-size: 14px;
+    font-style: italic;
+}
+
+
+/* Обновленные стили для превью */
+.ticket-preview {
+    font-size: 12px;
+    color: var(--gray-dark, #718096);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 
 /* ======== МОДАЛЬНЫЕ ОКНА (общие) ======== */
 .modal {

@@ -51,6 +51,8 @@ public class SupportChatController {
         String userName = message.getFromUserName();
 
         System.out.println("📝 Создание тикета от " + userName + " (session: " + sessionId + ")");
+        System.out.println("   Заголовок: " + message.getTitle());
+        System.out.println("   Описание: " + message.getText());
 
         // Регистрируем сессию
         queueService.registerSession(userId, sessionId);
@@ -66,8 +68,12 @@ public class SupportChatController {
             client = queueService.addClientUser(userId, userName);
         }
 
-        // Создаем тикет
-        SupportTicket ticket = queueService.createTicket(client.getId(), message.getText());
+        // Создаем тикет с заголовком и описанием
+        SupportTicket ticket = queueService.createTicket(
+                client.getId(),
+                message.getTitle() != null ? message.getTitle() : "Новое обращение",
+                message.getText()
+        );
 
         // Отправляем подтверждение на ВСЕ сессии клиента
         ChatMessage response = new ChatMessage(
@@ -76,9 +82,10 @@ public class SupportChatController {
                 ChatMessage.MessageType.TICKET_CREATED
         );
         response.setTicketId(ticket.getId());
+        response.setTitle(message.getTitle());
         sendToUserAllSessions(userId, "/queue/support", response);
 
-        // *** ВАЖНО: Отправляем уведомление ВСЕМ операторам о новом тикете ***
+        // Отправляем уведомление операторам о новом тикете
         notifyOperatorsAboutNewTicket(ticket, client, message.getText());
 
         // Проверяем, есть ли свободный оператор для немедленного назначения

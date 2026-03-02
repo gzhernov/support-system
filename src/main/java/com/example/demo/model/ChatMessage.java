@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public class ChatMessage {
     private String id;
+    private String title;
     private String ticketId;
     private String fromUserId;
     private String fromUserName;
@@ -60,4 +61,7 @@ public class ChatMessage {
 
     public MessageType getType() { return type; }
     public void setType(MessageType type) { this.type = type; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 }

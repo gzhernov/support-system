@@ -181,6 +181,19 @@
     50% { transform: scale(1.5); opacity: 1; }
 }
 
+
+/* Стили для архивных тикетов (только клиентские) */
+.ticket-item.archived {
+    opacity: 0.8;
+    background: #f8fafc;
+}
+
+.ticket-item.archived .ticket-status {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+
 /* Статусы чата клиента */
 /*.chat-status {*/
 /*    padding: 5px 12px;*/

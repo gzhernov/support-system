@@ -65,13 +65,14 @@ public class SupportQueueService {
     }
 
     // Создание нового тикета
-    public SupportTicket createTicket(String clientId, String subject) {
+    public SupportTicket createTicket(String clientId, String subject, String description) {
         User client = users.get(clientId);
         if (client == null) {
             throw new RuntimeException("Клиент не найден");
         }
 
         SupportTicket ticket = new SupportTicket(clientId, client.getName(), subject);
+        ticket.setDescription(description);
         ticketQueue.add(ticket);
 
         // Сохраняем тикет в общую карту
@@ -80,8 +81,23 @@ public class SupportQueueService {
         // Инициализируем список сообщений для этого тикета
         ticketMessages.put(ticket.getId(), Collections.synchronizedList(new ArrayList<>()));
 
+        // Добавляем первое сообщение от клиента
+        if (description != null && !description.isEmpty()) {
+            ChatMessage firstMessage = new ChatMessage(
+                    client.getName(),
+                    description,
+                    ChatMessage.MessageType.CHAT
+            );
+            firstMessage.setFromUserId(clientId);
+            firstMessage.setTicketId(ticket.getId());
+            addMessageToTicket(ticket.getId(), firstMessage);
+        }
+
         System.out.println("📝 Создан новый тикет #" + ticket.getId() +
                 " от клиента " + client.getName());
+        System.out.println("   Заголовок: " + subject);
+        System.out.println("   Описание: " + description);
+        System.out.println("   Текущая очередь: " + ticketQueue.size() + " тикетов");
 
         return ticket;
     }
@@ -431,4 +447,42 @@ public class SupportQueueService {
 
         return stats;
     }
+
+
+    // Получение закрытых тикетов (для оператора)
+    public List<SupportTicket> getClosedTickets() {
+        return allTickets.values().stream()
+                .filter(t -> t.getStatus() == SupportTicket.TicketStatus.CLOSED)
+                .collect(Collectors.toList());
+    }
+
+    // Получение всех тикетов для конкретного клиента
+    public Collection<SupportTicket> getClientTickets(String clientId) {
+        System.out.println("📊 Поиск всех тикетов для клиента: " + clientId);
+
+        return allTickets.values().stream()
+                .filter(ticket -> ticket.getClientId().equals(clientId))
+                .collect(Collectors.toList());
+    }
+
+    // Получение ТЕКУЩИХ (открытых и в работе) тикетов для клиента
+    public Collection<SupportTicket> getClientCurrentTickets(String clientId) {
+        System.out.println("📊 Поиск текущих тикетов для клиента: " + clientId);
+
+        return allTickets.values().stream()
+                .filter(ticket -> ticket.getClientId().equals(clientId))
+                .filter(ticket -> ticket.getStatus() != SupportTicket.TicketStatus.CLOSED)
+                .collect(Collectors.toList());
+    }
+
+    // Получение АРХИВНЫХ (закрытых) тикетов для клиента
+    public Collection<SupportTicket> getClientArchivedTickets(String clientId) {
+        System.out.println("📊 Поиск архивных тикетов для клиента: " + clientId);
+
+        return allTickets.values().stream()
+                .filter(ticket -> ticket.getClientId().equals(clientId))
+                .filter(ticket -> ticket.getStatus() == SupportTicket.TicketStatus.CLOSED)
+                .collect(Collectors.toList());
+    }
+
 }

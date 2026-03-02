@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="css/shared.css">
     <!-- Стили клиента -->
     <link rel="stylesheet" href="css/client.css">
+    <!-- Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- WebSocket библиотеки -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
@@ -46,6 +48,20 @@
                 </h2>
                 <button class="new-ticket-btn" onclick="openNewTicketModal()">
                     <span>➕</span> Новое обращение
+                </button>
+            </div>
+
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="current" onclick="switchClientTab('current')">
+                    <i class="fas fa-comments"></i> Текущие
+                    <span class="tab-badge" id="currentTabBadge">0</span>
+                </button>
+                <button class="tab-btn" data-tab="archived" onclick="switchClientTab('archived')">
+                    <i class="fas fa-archive"></i> Архивные
+                    <span class="tab-badge" id="archivedTabBadge">0</span>
+                </button>
+                <button class="tab-btn" data-tab="all" onclick="switchClientTab('all')">
+                    <i class="fas fa-list"></i> Все
                 </button>
             </div>
 
