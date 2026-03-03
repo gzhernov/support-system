@@ -646,8 +646,8 @@ function createTicketElement(ticket) {
             </div>
         </div>
         <div class="client-info">
-            <span class="client-avatar-small">${ticket.clientName.charAt(0)}</span>
-            <span class="client-name">${ticket.clientName}</span>
+            <span class="client-avatar-small">${ticket.clientName?.charAt(0) || '👤'}</span>
+            <span class="client-name">${ticket.clientName || 'Клиент'}</span>
             <span class="client-sessions-badge">
                 <i class="fas fa-globe"></i> ${ticket.clientSessions || 1}
             </span>
@@ -657,7 +657,7 @@ function createTicketElement(ticket) {
             <span class="ticket-time-badge">
                 <i class="far fa-clock"></i> ${timeAgo}
             </span>
-            <span>#${ticket.id.substring(0, 6)}</span>
+            <span>#${ticket.id?.substring(0, 6) || 'новый'}</span>
         </div>
     `;
 
@@ -683,6 +683,8 @@ function getStatusText(status) {
 }
 
 function getTimeAgo(dateString) {
+    if (!dateString) return 'только что';
+
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now - date;
@@ -731,8 +733,8 @@ function openTicket(ticketId) {
     setElementClass('activeChat', 'hidden', false);
 
     setElementText('activeTicketTitle', ticket.title || 'Обращение');
-    setElementText('activeTicketId', `#${ticket.id.substring(0, 8)}`);
-    setElementText('clientName', ticket.clientName);
+    setElementText('activeTicketId', `#${ticket.id?.substring(0, 8) || 'новый'}`);
+    setElementText('clientName', ticket.clientName || 'Клиент');
     setElementText('activeTicketTime', `открыт: ${formatTime(ticket.createdAt)}`);
 
     const statusEl = document.getElementById('activeTicketStatus');
@@ -743,7 +745,7 @@ function openTicket(ticketId) {
 
     const clientAvatar = document.getElementById('clientAvatar');
     if (clientAvatar) {
-        clientAvatar.textContent = ticket.clientName.charAt(0);
+        clientAvatar.textContent = ticket.clientName?.charAt(0) || '👤';
     }
 
     const sessionsCount = document.getElementById('clientSessionsCount');
@@ -769,6 +771,9 @@ function openTicket(ticketId) {
     }
 
     renderMessages(ticket.messages || []);
+
+    // Загружаем сообщения для этого тикета
+    loadTicketMessages(ticketId);
 }
 
 function closeCurrentTicket() {
@@ -838,7 +843,7 @@ function createMessageElement(msg) {
 
 function updateCurrentTicket(ticket) {
     setElementText('activeTicketTitle', ticket.title || 'Обращение');
-    setElementText('clientName', ticket.clientName);
+    setElementText('clientName', ticket.clientName || 'Клиент');
 
     const statusEl = document.getElementById('activeTicketStatus');
     if (statusEl) {
@@ -850,6 +855,7 @@ function updateCurrentTicket(ticket) {
 }
 
 function formatTime(dateString) {
+    if (!dateString) return '--:--';
     return new Date(dateString).toLocaleTimeString('ru', {
         hour: '2-digit', minute: '2-digit'
     });
@@ -970,7 +976,7 @@ function showTicketDetails(ticketId) {
     setElementText('detailClientName', ticket.clientName);
     setElementText('detailClientId', ticket.clientId);
     setElementText('detailStatus', getStatusText(ticket.status));
-    setElementText('detailCreatedAt', new Date(ticket.createdAt).toLocaleString());
+    setElementText('detailCreatedAt', ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : '-');
     setElementText('detailAcceptedAt', ticket.acceptedAt ? new Date(ticket.acceptedAt).toLocaleString() : '-');
     setElementText('detailMessagesCount', ticket.messages?.length || 0);
     setElementText('detailClientSessions', ticket.clientSessions || 1);
@@ -1057,7 +1063,6 @@ function setElementClass(id, className, add = true) {
 
 
 // ======== ЗАГРУЗКА ИСТОРИИ ТИКЕТОВ ========
-// ✅ НУЖНО: Загрузка истории при входе (однократно)
 async function loadTicketsHistory() {
     try {
         // Загружаем существующие тикеты из очереди

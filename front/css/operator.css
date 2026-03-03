@@ -149,6 +149,36 @@
 }
 
 
+/* Горизонтальное расположение в шапке чата */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.chat-header-info {
+    flex: 1;
+}
+
+.chat-header-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Статус тикета в шапке */
+#activeTicketStatus {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    margin: 0;
+    padding: 8px 15px;
+}
+
 /* Специфичные статусы для оператора */
 .status-OPEN { background: #fef3c7; color: #92400e; }
 .status-IN_PROGRESS { background: #dbeafe; color: #1e40af; }
