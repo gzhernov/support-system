@@ -9,18 +9,18 @@ public class ChatMessage {
     private String ticketId;
     private String fromUserId;
     private String fromUserName;
-    private String toUserId;      // Получатель (ID оператора или клиента, кому адресовано сообщение)
     private String text;
     private String timestamp;
     private MessageType type;
 
     public enum MessageType {
-        CHAT,           // Обычное сообщение
-        TICKET_CREATED, // Тикет создан
-        TICKET_ACCEPTED, // Оператор принял
-        TICKET_CLOSED,  // Тикет закрыт
-        SUPPORT_JOINED, // Оператор подключился
-        TYPING,          // Печатает...
+        CHAT,                // Обычное сообщение
+        TICKET_CREATED,      // Тикет создан
+        TICKET_ACCEPTED,     // Оператор принял (уведомление)
+        ACCEPT_TICKET,       // Запрос оператора на принятие тикета
+        TICKET_CLOSED,       // Тикет закрыт
+        SUPPORT_JOINED,      // Оператор подключился
+        TYPING,              // Печатает...
         GREETING
     }
 
@@ -49,9 +49,6 @@ public class ChatMessage {
 
     public String getFromUserName() { return fromUserName; }
     public void setFromUserName(String fromUserName) { this.fromUserName = fromUserName; }
-
-    public String getToUserId() { return toUserId; }
-    public void setToUserId(String toUserId) { this.toUserId = toUserId; }
 
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
