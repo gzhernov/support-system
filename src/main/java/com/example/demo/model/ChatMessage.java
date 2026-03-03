@@ -9,7 +9,7 @@ public class ChatMessage {
     private String ticketId;
     private String fromUserId;
     private String fromUserName;
-    private String toUserId;
+    private String toUserId;      // Получатель (ID оператора или клиента, кому адресовано сообщение)
     private String text;
     private String timestamp;
     private MessageType type;
